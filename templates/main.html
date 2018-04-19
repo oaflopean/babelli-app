@@ -1,0 +1,44 @@
+{% extends "form.html" %}
+{% block search_result %}
+	<div class="limiter">
+		<div class="container-table100">
+			<div class="wrap-table100">
+                <h1>{{query}}...</h1>
+					<div class="table">
+
+						<div class="row header">
+							<div class="cell">
+								Title
+							</div>
+							<div class="cell">
+								Author
+							</div>
+							<div class="cell">
+								Information
+							</div>
+							<div class="cell">
+								Download
+							</div>
+
+						</div>
+{% for each in results %}
+						<div class="row">
+							<div class="cell" data-title="Title">
+								{{each.title}}
+							</div>
+							<div class="cell" data-title="Author">
+								{{each.author}}
+							</div>
+							<div class="cell" data-title="Information">
+								<a href="/page/{{each.bookid}}">Page</a>
+							</div>
+							<div class="cell" data-title="Download">
+								  <a href="{{each.textlink}}" target="_blank">Text</a> <a href="{{each.epublink}} " target="_blank">EBook</a>
+							</div>
+
+                        </div>
+
+
+         {% endfor %}
+					</div></div></div></div>
+    {% endblock %}

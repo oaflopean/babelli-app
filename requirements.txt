@@ -1,0 +1,6 @@
+Flask==0.12.2
+Werkzeug<0.13.0,>=0.12.0
+Requests==2.7.0
+six==1.11.0
+blinker==1.4
+

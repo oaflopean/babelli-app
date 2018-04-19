@@ -1,0 +1,31 @@
+<!-- extend base layout -->
+{% extends "form.html" %}
+{% block search_result %}
+   <h1>{{query}}. . .</h1>
+
+<table border = 1>
+         {% for each in results %}
+
+          <tr>
+
+                <td><div itemscope="" itemtype="http://schema.org/Book"><h2>
+                   <span itemprop="name">{{each.title }}</span></h2>
+             <i><span itemprop="author">{{ each.author }}</span></i>
+              <span itemprop="bookFormat"> <a href="{{each.textlink}}" target="_blank">Text</a></span>
+              <span itemprop="bookFormat"> <a href="{{each.epublink}} " target="_blank">E-book</a></span>
+
+               </div></tr>
+         {% endfor %}
+
+      </table>
+
+{% endblock %}
+
+
+
+
+
+
+
+
+

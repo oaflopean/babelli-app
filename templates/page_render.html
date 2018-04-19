@@ -1,0 +1,37 @@
+<!-- extend base layout -->
+{% extends "form.html" %}
+{% block search_result %}
+
+<link rel="stylesheet" type="text/css" href="/static/css/page.css" xmlns="http://www.w3.org/1999/html">
+<br><br>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<div itemscope="" itemtype="http://schema.org/Book">
+    <meta itemprop="bookFormat" content="EBook/EPUB"/>
+<p> <b>{{result.bookid}}</b></p>
+    
+<p><dd itemprop="name">{{result.title}}</dd>
+    <p><span name="author"><span itemprop="author" itemscope itemtype="http://schema.org/Person" itemid="#author">
+      <meta itemprop="name" content="Tolkien, J. R. R. (John Ronald Reuel)"/>{{result.author}}
+
+    </span>
+</span></p>
+<pre><b><span name="keywords" itemprop="keywords" >{{subject}}</span></b></p></pre>
+<ul>
+
+            <li><a href="{{result.textlink}}" target="_blank">Text Format</a></li>
+            <li><a href="{{result.epublink}} " target="_blank">EBook Format</a></li>
+        </ul>
+
+
+
+<div class="limiter">
+    <div class="container-table100">
+            <div class="wrap-table100">
+    <article>
+        <h1>{{result.title}} by <i>{{result.author}}</i></h1>
+         </article>
+    <a href="http://www.gutenberg.org/etext/{{result.bookid}}" target="_blank">Visit book's Gutenberg page</a>
+                <p><span  itemprop="text" ><iframe src="{{result.textlink}}" style=" top:0px; left:0px; bottom:0px; right:0px; width:100%; height:4096px; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;height="1000" width="1000">Failed to load extra content</iframe></span></div></p>
+       <br><p>Note: Extra content on this page may not be available until we upgrade to a dedicated host server. Sorry about that.</p>
+    </div></div></div>
+{% endblock %}

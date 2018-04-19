@@ -1,0 +1,25 @@
+input[type="text"], textarea {
+
+  background-color : #E9AFAF; 
+
+}
+
+body {
+    background-color: #D56262;
+}
+
+h1{
+    color:#64CECE}
+
+a{
+ color:#64CECE}
+
+
+footer
+{
+    padding:5px;
+    text-align:center;
+
+     background-color:#D56262;
+}
+
