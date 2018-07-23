@@ -8,82 +8,12 @@ import json
 import urllib2
 import requests
 from flask import send_file
-from flask_sitemap import Sitemap, sitemap_page_needed
-
+import datetime
+now = datetime.datetime.now()
 
 app = Flask(__name__)
 app.config.update(
-    PROPAGATE_EXCEPTIONS = True
-)
-def getText(bookid):
-
-    linkTxt = "http://www.copypastapublishing.com/gutenberg"
-    formula = list(bookid)
-    my_list_len = len(formula)
-    for h in range(0, my_list_len - 1):
-        linkTxt = linkTxt + "/" + formula[h]
-    textLink = linkTxt + "/" + bookid + "/" + bookid + ".txt"
-    return textLink
-
-def sfunction(tokens):
-    gutenberg = json.load(open('index.json'))
-    ids = json.load(open('ids'))
-    authors = json.load(open('authors2'))
-    results = []
-    IDresults = []
-    previous = []
-    epub=''
-    if len(tokens) > 1:
-        for g in tokens:
-
-            Ids = []
-            try:
-                Ids = gutenberg[g]
-            except KeyError:
-                continue
-            RESULTS = set(Ids)
-            Ids = list(RESULTS)
-            if IDresults == []:
-                IDresults.extend(Ids)
-
-            try:
-                IDresults = set(Ids).intersection(previous)
-                if len(IDresults) > 100:
-                    break
-            except TypeError:
-                continue
-            previous = Ids
-    else:
-        try:
-            IDresults = gutenberg[tokens[0]]
-        except KeyError:
-            IDresults = []
-    Ids = []
-    for q in IDresults:
-        try:
-            try:
-                title = ids.get(str(q))
-            except KeyError:
-                title = "none"
-            try:
-                author = authors.get(str(q))
-            except KeyError:
-                author = "none"
-            bookid = str(q)
-            book = Book(title, author, bookid, "", "")
-            cstext="http://storage.googleapis.com/babelli-epubs/text/"
-            csepub="http://storage.googleapis.com/babelli-epubs/epub/"
-            epub = csepub  +"pg" + bookid + "-images.epub"
-            textl = cstext+bookid+".txt"
-            book.epublink = epub
-            book.textlink = textl
-
-            results.append(book)
-        except ValueError:
-            continue
-    RESULTS = set(results)
-    results = list(RESULTS)
-    return results
+    PROPAGATE_EXCEPTIONS = True)
 
 class Book(object):
     def __init__(self, title, author, bookid, textlink, epublink):
@@ -100,7 +30,71 @@ class Book(object):
 
 
 
-# a route for generating sitemapindex.xml
+
+def getText(bookid):
+
+    linkTxt = "http://www.copypastapublishing.com/gutenberg"
+    formula = list(bookid)
+    my_list_len = len(formula)
+    for h in range(0, my_list_len - 1):
+        linkTxt = linkTxt + "/" + formula[h]
+    textLink = linkTxt + "/" + bookid + "/" + bookid + ".txt"
+    return textLink
+
+def sfunction(tokens):
+    index = json.load(open('index.json'))
+    ids = json.load(open('ids'))
+    authors = json.load(open('authors2'))
+    IDresults = []
+
+    Ids=[]
+    if len(tokens) > 1:
+        for i in tokens:
+            if IDresults == []:
+                try:
+                    IDresults.extend(index[i])
+                except KeyError:
+                    continue
+            else:
+                try:
+                    IDresults = set(IDresults).intersection(index[i])
+                except KeyError:
+                    continue
+    else:
+        try:
+            IDresults = index[tokens[0]]
+        except KeyError:
+            IDresults = []
+    Ids = []
+    for q in IDresults:
+        try:
+            try:
+                title = ids.get(str(q))
+            except KeyError:
+                title = "none"
+                print("error")
+            try:
+                author = authors.get(str(q))
+            except KeyError:
+                author = "none"
+            bookid = str(q)
+            book = Book(title, author, bookid, "", "")
+            cstext="http://storage.googleapis.com/babelli-epubs/text/"
+            csepub="http://storage.googleapis.com/babelli-epubs/epub/"
+            epub = csepub  +"pg" + bookid + "-images.epub"
+            textl = cstext+bookid+".txt"
+            book.epublink = epub
+            book.textlink = textl
+            Ids.append(book)
+        except ValueError:
+            continue
+    RESULTS = set(Ids)
+    Ids = list(RESULTS)
+    print(Ids)
+    return Ids
+
+
+ # a route for generating sitemapindex.xml
 @app.route('/sitemapindex.xml', methods=['GET'])
 def sitemapindex():
     """Generate sitemapindex.xml. Makes a list of urls and date modified."""
@@ -110,21 +104,25 @@ def sitemapindex():
     assert isinstance(website, object)
     return website
 
+
 @app.route('/sitemap.1.txt', methods=['GET'])
 def sitemap1():
     return app.send_static_file('sitemap.1.txt')
+
 
 @app.route("/sitemap.2.txt")
 def sitemap2():
     return app.send_static_file('sitemap.2.txt')
 
+
 @app.route('/')
 @app.route('/index')
 def form():
     results = []
-    tokens = ["prince"]
+    tokens = ["science", "fiction"]
     results=sfunction(tokens)
-    return render_template('main.html', query="", results=results)
+    return render_template('main.html', query="science fiction", results=results)
+
 
 @app.route('/submitted', methods=['POST'])
 def submitted_form():
@@ -156,10 +154,6 @@ def page(bookid):
     epub = baseLink + "cache/epub/" + str(bookid) + "/"
     book = Book(title, author, bookid, linkTxt, epub)
     result=book
-
-
-
-
     return render_template('page_render.html', subject=subject, result=result)
 
 
@@ -171,6 +165,7 @@ def search_results(query):
     results=sfunction(tokens)
     return render_template('main.html', query=query, results=results)
 
+
 @app.route('/appsearch/<query>', methods=["GET"])
 def appsearch(query):
     tokens = query.lower().split(" ")
@@ -181,3 +176,4 @@ def appsearch(query):
         status=200,
         mimetype='application/json')
     return response
+
