@@ -9,11 +9,57 @@ import urllib2
 import requests
 from flask import send_file
 import datetime
+import os
+
+import MySQLdb
+import webapp2
+import sys
 now = datetime.datetime.now()
 
 app = Flask(__name__)
 app.config.update(
     PROPAGATE_EXCEPTIONS = True)
+
+# These environment variables are configured in app.yaml.
+CLOUDSQL_CONNECTION_NAME = os.environ.get('CLOUDSQL_CONNECTION_NAME')
+CLOUDSQL_USER = os.environ.get('CLOUDSQL_USER')
+CLOUDSQL_PASSWORD = os.environ.get('CLOUDSQL_PASSWORD')
+
+
+def connect_to_cloudsql():
+    # When deployed to App Engine, the `SERVER_SOFTWARE` environment variable
+    # will be set to 'Google App Engine/version'.
+    if os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine/'):
+        # Connect using the unix socket located at
+        # /cloudsql/cloudsql-connection-name.
+        cloudsql_unix_socket = os.path.join(
+            '/cloudsql', CLOUDSQL_CONNECTION_NAME)
+
+        db = MySQLdb.connect(
+            unix_socket=cloudsql_unix_socket,
+            user=CLOUDSQL_USER,
+            db="babelli_library_test",
+            passwd="",
+            charset='ascii')
+
+    # If the unix socket is unavailable, then try to connect using TCP. This
+    # will work if you're running a local MySQL server or using the Cloud SQL
+    # proxy, for example:
+    #
+    #   $ cloud_sql_proxy -instances=your-connection-name=tcp:3306
+    #
+    else:
+        db = MySQLdb.connect(
+            host='127.0.0.1',
+            user=CLOUDSQL_USER,
+            passwd="",
+            db="babelli_library_test",
+            use_unicode=True,
+            charset='ascii')
+
+    return db
+
+
 
 class Book(object):
     def __init__(self, title, author, bookid, textlink, epublink):
@@ -42,6 +88,33 @@ def getText(bookid):
     return textLink
 
 def sfunction(tokens):
+    db = connect_to_cloudsql()
+    cursor = db.cursor()
+    query = ("SELECT * FROM books WHERE title LIKE \'%"+" ".join(tokens)+"%\' OR author LIKE \'%"+" ".join(tokens)+"%\' OR subject LIKE \'%"+" ".join(tokens)+"%\'")
+    cursor.execute(query)
+    data=cursor.fetchall()
+    Ids=[]
+
+    for bookdata in data:
+        print(bookdata)
+        title=str(bookdata[0])
+        author=str(bookdata[1])
+        bookid=str(bookdata[2])
+
+        book = Book(title, author, str(bookid), "", "")
+
+        cstext = "http://storage.googleapis.com/babelli-epubs/text/"
+        csepub = "http://storage.googleapis.com/babelli-epubs/epub/"
+        epub = csepub + "pg" + str(bookid)+ "-images.epub"
+        textl = cstext + str(bookid)+ ".txt"
+        book.epublink = epub
+        book.textlink = textl
+        Ids.append(book)
+    RESULTS = set(Ids)
+    Ids = list(RESULTS)
+    print(Ids)
+    return Ids
+"""
     index = json.load(open('index.json'))
     ids = json.load(open('ids'))
     authors = json.load(open('authors2'))
@@ -92,7 +165,7 @@ def sfunction(tokens):
     Ids = list(RESULTS)
     print(Ids)
     return Ids
-
+"""""
 
  # a route for generating sitemapindex.xml
 @app.route('/sitemapindex.xml', methods=['GET'])
@@ -109,7 +182,6 @@ def sitemapindex():
 def sitemap1():
     return app.send_static_file('sitemap.1.txt')
 
-
 @app.route("/sitemap.2.txt")
 def sitemap2():
     return app.send_static_file('sitemap.2.txt')
@@ -121,7 +193,7 @@ def form():
     results = []
     tokens = ["science", "fiction"]
     results=sfunction(tokens)
-    return render_template('main.html', query="science fiction", results=results)
+    return render_template('main.html', query="science fiction", results=results).encode( "utf-8" )
 
 
 @app.route('/submitted', methods=['POST'])
